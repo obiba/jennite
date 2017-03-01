@@ -12,20 +12,27 @@ package org.obiba.jennite.vcf;
 
 import org.obiba.opal.spi.vcf.VCFStore;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
+/**
+ * All VCF files of the store are in a dedicated directory.
+ */
 public class JenniteVCFStore implements VCFStore {
 
   private final String name;
 
+  private final File directory;
+
   private final Properties properties;
 
-  public JenniteVCFStore(String name, Properties properties) {
+  public JenniteVCFStore(String name, File directory, Properties properties) {
     this.name = name;
+    this.directory = directory;
     this.properties = properties;
   }
 

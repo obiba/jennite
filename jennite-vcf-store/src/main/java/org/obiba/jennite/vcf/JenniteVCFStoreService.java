@@ -10,13 +10,17 @@
 
 package org.obiba.jennite.vcf;
 
-import org.obiba.jennite.vcf.util.FileUtil;
+import org.obiba.core.util.FileUtil;
 import org.obiba.opal.spi.vcf.VCFStore;
 import org.obiba.opal.spi.vcf.VCFStoreService;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
+/**
+ * VCF files are persisted by store. For each store there is a dedicated directory with a properties file and the VCF files.
+ */
 public class JenniteVCFStoreService implements VCFStoreService {
 
   private Properties properties;
@@ -52,7 +56,7 @@ public class JenniteVCFStoreService implements VCFStoreService {
   // Store methods
   //
 
-  public Collection<String> getStores() {
+  public Collection<String> getStoreNames() {
     List<String> names = new ArrayList<String>();
     for (File child : getDataFolder().listFiles()) {
       if (child.isDirectory()) names.add(child.getName());
@@ -65,17 +69,21 @@ public class JenniteVCFStoreService implements VCFStoreService {
   }
 
   public VCFStore getStore(String name) throws NoSuchElementException {
-    return new JenniteVCFStore(name, properties);
+    return new JenniteVCFStore(name, getStoreFolder(name), properties);
   }
 
   public VCFStore createStore(String name) {
     File storeDir = getStoreFolder(name);
     if(!storeDir.exists()) storeDir.mkdirs();
-    return new JenniteVCFStore(name, properties);
+    return new JenniteVCFStore(name, getStoreFolder(name), properties);
   }
 
   public void deleteStore(String name) {
-    FileUtil.removeDirectory(getStoreFolder(name));
+    try {
+      FileUtil.delete(getStoreFolder(name));
+    } catch (IOException e) {
+      // ignore
+    }
   }
 
   //
@@ -89,7 +97,7 @@ public class JenniteVCFStoreService implements VCFStoreService {
   File getDataFolder() {
     checkStatus();
     String defaultDir = new File(".").getAbsolutePath();
-    String dataDirPath = properties.getProperty("data.dir", defaultDir);
+    String dataDirPath = properties.getProperty(VCFStoreService.DATA_DIR_PROPERTY, defaultDir);
     File dataDir = new File(dataDirPath);
     if (!dataDir.exists()) dataDir.mkdirs();
     return dataDir;

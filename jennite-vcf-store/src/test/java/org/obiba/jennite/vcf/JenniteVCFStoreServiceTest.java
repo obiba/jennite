@@ -13,11 +13,11 @@ package org.obiba.jennite.vcf;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.obiba.jennite.vcf.util.FileUtil;
-import org.obiba.opal.spi.vcf.VCFStore;
+import org.obiba.core.util.FileUtil;
 import org.obiba.opal.spi.vcf.VCFStoreService;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -26,13 +26,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class JenniteVCFStoreServiceTest {
 
   @Before
-  public void setUp() {
-    FileUtil.removeDirectory(new File(getDefaultProperties().getProperty(VCFStoreService.DATA_DIR_PROPERTY)));
+  public void setUp() throws IOException {
+    FileUtil.delete(new File(getDefaultProperties().getProperty(VCFStoreService.DATA_DIR_PROPERTY)));
   }
 
   @After
-  public void tearDown() {
-    FileUtil.removeDirectory(new File(getDefaultProperties().getProperty(VCFStoreService.DATA_DIR_PROPERTY)));
+  public void tearDown() throws IOException {
+    FileUtil.delete(new File(getDefaultProperties().getProperty(VCFStoreService.DATA_DIR_PROPERTY)));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -52,13 +52,14 @@ public class JenniteVCFStoreServiceTest {
   @Test
   public void testService() {
     VCFStoreService service = createStoreService();
-    Collection<String> stores = service.getStores();
+    Collection<String> stores = service.getStoreNames();
     assertThat(service.hasStore("foo")).isFalse();
     assertThat(stores.isEmpty()).isTrue();
     service.createStore("foo");
     assertThat(service.hasStore("foo")).isTrue();
-    stores = service.getStores();
+    stores = service.getStoreNames();
     assertThat(stores.size()).isEqualTo(1);
+    assertThat(stores.iterator().next()).isEqualTo("foo");
   }
 
   private VCFStoreService createStoreService() {
