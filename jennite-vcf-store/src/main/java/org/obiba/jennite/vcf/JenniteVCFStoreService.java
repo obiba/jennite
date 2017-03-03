@@ -32,7 +32,7 @@ public class JenniteVCFStoreService implements VCFStoreService {
   //
 
   public String getName() {
-    return "jennite";
+    return "jennite-vcf-store";
   }
 
   public void configure(Properties properties) {
