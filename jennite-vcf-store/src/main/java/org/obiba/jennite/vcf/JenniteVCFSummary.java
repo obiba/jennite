@@ -48,17 +48,17 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
   }
 
   @Override
-  public Collection<String> sampleIds() {
+  public Collection<String> getSampleIds() {
     return sampleIds;
   }
 
   @Override
-  public int variantsCount() {
+  public int getVariantsCount() {
     return variantsCount;
   }
 
   @Override
-  public int genotypesCount() {
+  public int getGenotypesCount() {
     return genotypesCount;
   }
 
