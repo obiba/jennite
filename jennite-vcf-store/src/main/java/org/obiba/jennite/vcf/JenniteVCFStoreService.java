@@ -57,10 +57,10 @@ public class JenniteVCFStoreService implements VCFStoreService {
   //
 
   public Collection<String> getStoreNames() {
-    List<String> names = new ArrayList<String>();
-    for (File child : getDataFolder().listFiles()) {
-      if (child.isDirectory()) names.add(child.getName());
-    }
+    List<String> names = new ArrayList<>();
+    File[] children = getDataFolder().listFiles(File::isDirectory);
+    if (children == null) return names;
+    for (File child : children) names.add(child.getName());
     return names;
   }
 
@@ -69,12 +69,14 @@ public class JenniteVCFStoreService implements VCFStoreService {
   }
 
   public VCFStore getStore(String name) throws NoSuchElementException {
+    if (!getStoreFolder(name).exists()) throw new NoSuchElementException("No VCF store exists with name: " + name);
     return new JenniteVCFStore(name, getStoreFolder(name), properties);
   }
 
   public VCFStore createStore(String name) {
     File storeDir = getStoreFolder(name);
-    if(!storeDir.exists()) storeDir.mkdirs();
+    if(storeDir.exists()) throw new IllegalArgumentException("The VCF store already exists: " + name);
+    storeDir.mkdirs();
     return new JenniteVCFStore(name, getStoreFolder(name), properties);
   }
 
