@@ -65,8 +65,7 @@ public class JenniteVCFStore implements VCFStore {
 
   public VCFSummary getVCFSummary(String vcfName) throws NoSuchElementException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
-
-    return null;
+    return JenniteVCFSummary.newSummary(vcfName).size(getVCFGZFile(vcfName)).samples(getSamplesFile(vcfName)).build();
   }
 
   /**
