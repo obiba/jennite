@@ -12,7 +12,10 @@ package org.obiba.jennite.vcf;
 
 import org.obiba.opal.spi.vcf.VCFStore;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,9 +24,17 @@ import java.util.stream.Stream;
 
 public class JenniteVCFSummary implements VCFStore.VCFSummary {
 
+  private static final String SN_RECORDS = "SN\t0\tnumber of records:\t";
+
+  private static final String SN_SNPS = "SN\t0\tnumber of SNPs:\t";
+
   private final String name;
 
   private List<String> sampleIds = new ArrayList<>();
+
+  private int variantsCount = 0;
+
+  private int genotypesCount = 0;
 
   private long size;
 
@@ -43,12 +54,12 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
 
   @Override
   public int variantsCount() {
-    return 0;
+    return variantsCount;
   }
 
   @Override
   public int genotypesCount() {
-    return 0;
+    return genotypesCount;
   }
 
   @Override
@@ -76,6 +87,29 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
       if (!samplesFile.exists()) return this;
       try (Stream<String> stream = Files.lines(samplesFile.toPath())) {
         stream.forEach(line -> summary.sampleIds.add(line));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return this;
+    }
+
+    Builder statistics(File statsFile) {
+      if (!statsFile.exists()) return this;
+      try (BufferedReader br = new BufferedReader(new FileReader(statsFile))) {
+        String line;
+        boolean stop = false;
+        while (!stop && (line = br.readLine()) != null) {
+          try {
+            if (line.startsWith(SN_RECORDS)) {
+              summary.genotypesCount = Integer.parseInt(line.replace(SN_RECORDS, ""));
+            } else if (line.startsWith(SN_SNPS)) {
+              summary.variantsCount = Integer.parseInt(line.replace(SN_SNPS, ""));
+            }
+          } catch (NumberFormatException e) {
+            // ignore
+          }
+          stop = summary.variantsCount != 0 && summary.genotypesCount != 0;
+        }
       } catch (IOException e) {
         e.printStackTrace();
       }

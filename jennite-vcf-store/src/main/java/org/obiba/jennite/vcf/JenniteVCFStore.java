@@ -33,6 +33,8 @@ public class JenniteVCFStore implements VCFStore {
 
   private static final String SAMPLES_FILE = "samples.txt";
 
+  private static final String STATS_FILE = "statistics.tsv";
+
   private static final String EXEC_LOG = "exec.log";
 
   private final String name;
@@ -66,7 +68,8 @@ public class JenniteVCFStore implements VCFStore {
 
   public VCFSummary getVCFSummary(String vcfName) throws NoSuchElementException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
-    return JenniteVCFSummary.newSummary(vcfName).size(getVCFGZFile(vcfName)).samples(getSamplesFile(vcfName)).build();
+    return JenniteVCFSummary.newSummary(vcfName).size(getVCFGZFile(vcfName)).samples(getSamplesFile(vcfName))
+        .statistics(getStatsFile(vcfName)).build();
   }
 
   /**
@@ -97,6 +100,7 @@ public class JenniteVCFStore implements VCFStore {
     if (!isCompressed) compress(store);
     index(store);
     listSamples(store);
+    statistics(store);
   }
 
   public void deleteVCF(String vcfName) {
@@ -161,6 +165,12 @@ public class JenniteVCFStore implements VCFStore {
         ProcessBuilder.Redirect.to(getSamplesFile(vcfName)));
   }
 
+  private void statistics(String vcfName) {
+    // TODO check process status
+    int status = runProcess(vcfName, bcftools("stats", getVCFGZFile(vcfName).getAbsolutePath()),
+        ProcessBuilder.Redirect.to(getStatsFile(vcfName)));
+  }
+
   /**
    * Get VCF folder location.
    *
@@ -195,6 +205,16 @@ public class JenniteVCFStore implements VCFStore {
    */
   private File getSamplesFile(String vcfName) {
     return new File(getVCFFolder(vcfName), SAMPLES_FILE);
+  }
+
+  /**
+   * Get statistics file location.
+   *
+   * @param vcfName
+   * @return
+   */
+  private File getStatsFile(String vcfName) {
+    return new File(getVCFFolder(vcfName), STATS_FILE);
   }
 
   private int runProcess(String vcfName, String[] command) {
