@@ -70,14 +70,14 @@ public class JenniteVCFStoreService implements VCFStoreService {
 
   public VCFStore getStore(String name) throws NoSuchElementException {
     if (!getStoreFolder(name).exists()) throw new NoSuchElementException("No VCF store exists with name: " + name);
-    return new JenniteVCFStore(name, getStoreFolder(name), properties);
+    return new JenniteVCFStore(name, properties);
   }
 
   public VCFStore createStore(String name) {
     File storeDir = getStoreFolder(name);
     if(storeDir.exists()) throw new IllegalArgumentException("The VCF store already exists: " + name);
     storeDir.mkdirs();
-    return new JenniteVCFStore(name, getStoreFolder(name), properties);
+    return new JenniteVCFStore(name, properties);
   }
 
   public void deleteStore(String name) {

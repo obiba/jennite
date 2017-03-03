@@ -15,12 +15,15 @@ import org.obiba.opal.spi.vcf.VCFStore;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
  * All VCF files of the store are in a dedicated directory.
  */
 public class JenniteVCFStore implements VCFStore {
+
+  private static final SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
   private static final String VCF_FILE = "data.vcf";
 
@@ -34,13 +37,10 @@ public class JenniteVCFStore implements VCFStore {
 
   private final String name;
 
-  private final File directory;
-
   private final Properties properties;
 
-  public JenniteVCFStore(String name, File directory, Properties properties) {
+  public JenniteVCFStore(String name, Properties properties) {
     this.name = name;
-    this.directory = directory;
     this.properties = properties;
   }
 
@@ -50,6 +50,7 @@ public class JenniteVCFStore implements VCFStore {
 
   public Collection<String> getVCFNames() {
     List<String> names = new ArrayList<>();
+    File directory = new File(properties.getProperty("data.dir"), name);
     File[] children = directory.listFiles(File::isDirectory);
     if (children == null) return names;
     for (File child : children) {
@@ -113,6 +114,31 @@ public class JenniteVCFStore implements VCFStore {
     return new FileOutputStream(getVCFGZFile(vcfName));
   }
 
+  @Override
+  public OutputStream readVCF(String vcfName, Collection<String> samples) throws NoSuchElementException, IOException {
+    if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
+    String timestamp = dateTimeFormatter.format(System.currentTimeMillis());
+    File workDir = getVCFWorkFolder(vcfName);
+    File samplesFile = new File(workDir, "samples_" + timestamp + ".txt");
+    File outputFile = new File(workDir, "data_" + timestamp + ".vcf.gz");
+
+    try (BufferedWriter writer = Files.newBufferedWriter(samplesFile.toPath())) {
+      for (String s : samples) {
+        writer.write(s);
+        writer.newLine();
+      }
+    }
+
+    // TODO check status
+    int status = runProcess(vcfName, bcftools("view",
+        "--samples-file", samplesFile.getAbsolutePath(),
+        "--output-type", "z", // compressed VCF
+        "--output-file", outputFile.getAbsolutePath()));
+    outputFile.deleteOnExit();
+    samplesFile.deleteOnExit();
+    return new FileOutputStream(outputFile);
+  }
+
   //
   // Private methods
   //
@@ -142,7 +168,13 @@ public class JenniteVCFStore implements VCFStore {
    * @return
    */
   private File getVCFFolder(String vcfName) {
-    return new File(directory, vcfName);
+    return new File(properties.getProperty("data.dir"), name + File.separator + vcfName);
+  }
+
+  private File getVCFWorkFolder(String vcfName) {
+    File workDir = new File(properties.getProperty("work.dir"), name + File.separator + vcfName);
+    if (!workDir.exists()) workDir.mkdirs();
+    return workDir;
   }
 
   /**
