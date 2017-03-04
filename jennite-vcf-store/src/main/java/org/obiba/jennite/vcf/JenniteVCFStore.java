@@ -35,6 +35,8 @@ public class JenniteVCFStore implements VCFStore {
 
   private static final String STATS_FILE = "statistics.tsv";
 
+  private static final String VCF_PROPERTIES_FILE = "vcf.properties";
+
   private static final String EXEC_LOG = "exec.log";
 
   private final String name;
@@ -68,8 +70,7 @@ public class JenniteVCFStore implements VCFStore {
 
   public VCFSummary getVCFSummary(String vcfName) throws NoSuchElementException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
-    return JenniteVCFSummary.newSummary(vcfName).size(getVCFGZFile(vcfName)).samples(getSamplesFile(vcfName))
-        .statistics(getStatsFile(vcfName)).build();
+    return JenniteVCFSummary.newSummary(vcfName).properties(getVCFPropertiesFile(vcfName)).build();
   }
 
   /**
@@ -88,7 +89,11 @@ public class JenniteVCFStore implements VCFStore {
       store = vcfName.replaceAll("\\.vcf.gz$", "");
       isCompressed = true;
     }
-    else throw new IllegalArgumentException("Not a VCF (.vcf) of compressed VCF (.vcf.gz) file: " + vcfName);
+    else {
+      // assume it is a compressed file
+      store = vcfName;
+      isCompressed = true;
+    }
 
     // write data file, replacing anything that could be found at the VCF folder location
     File vcfFolder = getVCFFolder(store);
@@ -101,6 +106,7 @@ public class JenniteVCFStore implements VCFStore {
     index(store);
     listSamples(store);
     statistics(store);
+    properties(store, vcfName);
   }
 
   public void deleteVCF(String vcfName) {
@@ -171,6 +177,24 @@ public class JenniteVCFStore implements VCFStore {
         ProcessBuilder.Redirect.to(getStatsFile(vcfName)));
   }
 
+  private void properties(String vcfName, String originalVcfName) {
+    try (OutputStream out = new FileOutputStream(getVCFPropertiesFile(vcfName))) {
+      Properties prop = new Properties();
+      // track version of vcf store service
+      prop.setProperty("name", vcfName);
+      prop.setProperty("name.original", originalVcfName);
+      prop.setProperty("version", properties.getProperty("version"));
+      VCFSummary summary = JenniteVCFSummary.newSummary(vcfName).size(getVCFGZFile(vcfName)).samples(getSamplesFile(vcfName))
+          .statistics(getStatsFile(vcfName)).build();
+      prop.setProperty("summary.genotypes.count", "" + summary.getGenotypesCount());
+      prop.setProperty("summary.variants.count", "" + summary.getVariantsCount());
+      prop.setProperty("summary.size", "" + summary.size());
+      prop.store(out, null);
+    } catch (Exception e)  {
+      // ignore
+    }
+  }
+
   /**
    * Get VCF folder location.
    *
@@ -215,6 +239,16 @@ public class JenniteVCFStore implements VCFStore {
    */
   private File getStatsFile(String vcfName) {
     return new File(getVCFFolder(vcfName), STATS_FILE);
+  }
+
+  /**
+   * Get the VCF file properties location.
+   *
+   * @param vcfName
+   * @return
+   */
+  private File getVCFPropertiesFile(String vcfName) {
+    return new File(getVCFFolder(vcfName), VCF_PROPERTIES_FILE);
   }
 
   private int runProcess(String vcfName, String[] command) {

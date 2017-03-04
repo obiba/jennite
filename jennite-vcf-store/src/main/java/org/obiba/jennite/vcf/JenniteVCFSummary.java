@@ -12,14 +12,12 @@ package org.obiba.jennite.vcf;
 
 import org.obiba.opal.spi.vcf.VCFStore;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Stream;
 
 public class JenniteVCFSummary implements VCFStore.VCFSummary {
@@ -116,8 +114,22 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
       return this;
     }
 
+    public Builder properties(File vcfPropertiesFile) {
+      try (InputStream in = new FileInputStream(vcfPropertiesFile)) {
+        Properties prop = new Properties();
+        prop.load(in);
+        summary.genotypesCount = Integer.parseInt(prop.getProperty("summary.genotypes.count"));
+        summary.variantsCount = Integer.parseInt(prop.getProperty("summary.variants.count"));
+        summary.size = Long.parseLong(prop.getProperty("summary.size"));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return this;
+    }
+
     VCFStore.VCFSummary build() {
       return summary;
     }
+
   }
 }
