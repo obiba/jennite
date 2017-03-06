@@ -281,14 +281,6 @@ public class JenniteVCFStore implements VCFStore {
     return pb;
   }
 
-  private String[] vcftools(String... args) {
-    return getCommand("vcftools", args);
-  }
-
-  private String[] vcfsubset(String... args) {
-    return getCommand("vcf-subset", args);
-  }
-
   private String[] bcftools(String... args) {
     return getCommand("bcftools", args);
   }
