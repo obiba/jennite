@@ -13,6 +13,8 @@ package org.obiba.jennite.vcf;
 import org.obiba.core.util.FileUtil;
 import org.obiba.opal.spi.vcf.VCFStore;
 import org.obiba.opal.spi.vcf.VCFStoreService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -24,6 +26,8 @@ import java.util.stream.Stream;
  * All VCF files of the store are in a dedicated directory.
  */
 public class JenniteVCFStore implements VCFStore {
+
+  private static final Logger log = LoggerFactory.getLogger(JenniteVCFStore.class);
 
   private static final SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
@@ -145,13 +149,13 @@ public class JenniteVCFStore implements VCFStore {
   }
 
   @Override
-  public OutputStream readVCF(String vcfName) throws NoSuchElementException, IOException {
+  public void readVCF(String vcfName, OutputStream out) throws NoSuchElementException, IOException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
-    return new FileOutputStream(getVCFGZFile(vcfName));
+    Files.copy(getVCFGZFile(vcfName).toPath(), out);
   }
 
   @Override
-  public OutputStream readVCF(String vcfName, Collection<String> samples) throws NoSuchElementException, IOException {
+  public void readVCF(String vcfName, OutputStream out, Collection<String> samples) throws NoSuchElementException, IOException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
     String timestamp = dateTimeFormatter.format(System.currentTimeMillis());
     File workDir = getVCFWorkFolder(vcfName);
@@ -172,7 +176,8 @@ public class JenniteVCFStore implements VCFStore {
         "--output-file", outputFile.getAbsolutePath()));
     outputFile.deleteOnExit();
     samplesFile.deleteOnExit();
-    return new FileOutputStream(outputFile);
+
+    Files.copy(outputFile.toPath(), out);
   }
 
   //
@@ -288,13 +293,16 @@ public class JenniteVCFStore implements VCFStore {
   }
 
   private int runProcess(String vcfName, String[] command, ProcessBuilder.Redirect redirect) {
+    int rval = -1;
     try {
-      ProcessBuilder.Redirect red = redirect == null ? ProcessBuilder.Redirect.appendTo(new File(vcfName, EXEC_LOG)) : redirect;
+      ProcessBuilder.Redirect red = redirect == null ? ProcessBuilder.Redirect.appendTo(new File(getVCFFolder(vcfName), EXEC_LOG)) : redirect;
       Process process = buildProcess(vcfName, command, red).start();
-      return process.waitFor();
+      rval = process.waitFor();
     } catch (Exception e) {
-      return -1;
+      log.error("Process execution failed", e);
     }
+    log.info("{} >> {}", String.join(" ", command), rval);
+    return rval;
   }
 
   /**
