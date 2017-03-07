@@ -12,11 +12,13 @@ package org.obiba.jennite.vcf;
 
 import org.obiba.core.util.FileUtil;
 import org.obiba.opal.spi.vcf.VCFStore;
+import org.obiba.opal.spi.vcf.VCFStoreService;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * All VCF files of the store are in a dedicated directory.
@@ -48,10 +50,29 @@ public class JenniteVCFStore implements VCFStore {
     this.properties = properties;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
+  public Collection<String> getSampleIds() {
+    Set<String> sampleIds = new LinkedHashSet<>();
+    getVCFNames().forEach(name -> {
+      File samplesFile = getSamplesFile(name);
+      if (samplesFile.exists()) {
+        try (Stream<String> stream = Files.lines(samplesFile.toPath())) {
+          stream.forEach(line -> sampleIds.add(line));
+        } catch (IOException e) {
+          // TODO
+          e.printStackTrace();
+        }
+      }
+    });
+    return sampleIds;
+  }
+
+  @Override
   public Collection<String> getVCFNames() {
     List<String> names = new ArrayList<>();
     File directory = new File(properties.getProperty("data.dir"), name);
@@ -64,10 +85,12 @@ public class JenniteVCFStore implements VCFStore {
     return names;
   }
 
+  @Override
   public boolean hasVCF(String vcfName) {
     return getVCFGZFile(vcfName).exists();
   }
 
+  @Override
   public VCFSummary getVCFSummary(String vcfName) throws NoSuchElementException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
     return JenniteVCFSummary.newSummary(vcfName).properties(getVCFPropertiesFile(vcfName)).build();
@@ -80,6 +103,7 @@ public class JenniteVCFStore implements VCFStore {
    * @param vcf
    * @throws IOException
    */
+  @Override
   public void writeVCF(String vcfName, InputStream vcf) throws IOException {
     // writing a VCF is making a directory with the compressed and indexed VCF file
     String store;
@@ -109,6 +133,7 @@ public class JenniteVCFStore implements VCFStore {
     properties(store, vcfName);
   }
 
+  @Override
   public void deleteVCF(String vcfName) {
     File store = getVCFFolder(vcfName);
     if (!store.exists()) return;
@@ -119,6 +144,7 @@ public class JenniteVCFStore implements VCFStore {
     }
   }
 
+  @Override
   public OutputStream readVCF(String vcfName) throws NoSuchElementException, IOException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
     return new FileOutputStream(getVCFGZFile(vcfName));
@@ -196,17 +222,23 @@ public class JenniteVCFStore implements VCFStore {
   }
 
   /**
-   * Get VCF folder location.
+   * Get the VCF data folder location.
    *
    * @param vcfName
    * @return
    */
   private File getVCFFolder(String vcfName) {
-    return new File(properties.getProperty("data.dir"), name + File.separator + vcfName);
+    return new File(properties.getProperty(VCFStoreService.DATA_DIR_PROPERTY), name + File.separator + vcfName);
   }
 
+  /**
+   * Get the VCF work folder location.
+   *
+   * @param vcfName
+   * @return
+   */
   private File getVCFWorkFolder(String vcfName) {
-    File workDir = new File(properties.getProperty("work.dir"), name + File.separator + vcfName);
+    File workDir = new File(properties.getProperty(VCFStoreService.WORK_DIR_PROPERTY), name + File.separator + vcfName);
     if (!workDir.exists()) workDir.mkdirs();
     return workDir;
   }

@@ -31,23 +31,28 @@ public class JenniteVCFStoreService implements VCFStoreService {
   // Service management
   //
 
+  @Override
   public String getName() {
     return "jennite-vcf-store";
   }
 
+  @Override
   public void configure(Properties properties) {
     this.properties = properties;
   }
 
+  @Override
   public boolean isRunning() {
     return running;
   }
 
+  @Override
   public void start() {
     // do init stuff
     running = true;
   }
 
+  @Override
   public void stop() {
     running = false;
   }
@@ -56,6 +61,7 @@ public class JenniteVCFStoreService implements VCFStoreService {
   // Store methods
   //
 
+  @Override
   public Collection<String> getStoreNames() {
     List<String> names = new ArrayList<>();
     File[] children = getDataFolder().listFiles(File::isDirectory);
@@ -64,15 +70,18 @@ public class JenniteVCFStoreService implements VCFStoreService {
     return names;
   }
 
+  @Override
   public boolean hasStore(String name) {
     return getStoreFolder(name).exists();
   }
 
+  @Override
   public VCFStore getStore(String name) throws NoSuchElementException {
     if (!getStoreFolder(name).exists()) throw new NoSuchElementException("No VCF store exists with name: " + name);
     return new JenniteVCFStore(name, properties);
   }
 
+  @Override
   public VCFStore createStore(String name) {
     File storeDir = getStoreFolder(name);
     if(storeDir.exists()) throw new IllegalArgumentException("The VCF store already exists: " + name);
@@ -80,6 +89,7 @@ public class JenniteVCFStoreService implements VCFStoreService {
     return new JenniteVCFStore(name, properties);
   }
 
+  @Override
   public void deleteStore(String name) {
     try {
       FileUtil.delete(getStoreFolder(name));
