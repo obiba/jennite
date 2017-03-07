@@ -97,7 +97,7 @@ public class JenniteVCFStore implements VCFStore {
   @Override
   public VCFSummary getVCFSummary(String vcfName) throws NoSuchElementException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
-    return JenniteVCFSummary.newSummary(vcfName).properties(getVCFPropertiesFile(vcfName)).build();
+    return JenniteVCFSummary.newSummary(vcfName).properties(getVCFPropertiesFile(vcfName)).samples(getSamplesFile(vcfName)).build();
   }
 
   /**
@@ -220,6 +220,7 @@ public class JenniteVCFStore implements VCFStore {
       prop.setProperty("summary.genotypes.count", "" + summary.getGenotypesCount());
       prop.setProperty("summary.variants.count", "" + summary.getVariantsCount());
       prop.setProperty("summary.size", "" + summary.size());
+      prop.setProperty("summary.samples.count", "" + summary.getSampleIds().size());
       prop.store(out, null);
     } catch (Exception e)  {
       // ignore
