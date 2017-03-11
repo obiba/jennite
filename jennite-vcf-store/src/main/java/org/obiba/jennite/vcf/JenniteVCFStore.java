@@ -83,8 +83,9 @@ public class JenniteVCFStore implements VCFStore {
     File[] children = directory.listFiles(File::isDirectory);
     if (children == null) return names;
     for (File child : children) {
-      File dataFile = getVCFGZFile(child.getName());
-      if (dataFile.exists()) names.add(child.getName());
+      // a new VCF could be in treatment, so report only the ones with properties ready
+      File propFile = getVCFPropertiesFile(child.getName());
+      if (propFile.exists()) names.add(child.getName());
     }
     return names;
   }
