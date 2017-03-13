@@ -181,6 +181,12 @@ public class JenniteVCFStore implements VCFStore {
     Files.copy(outputFile.toPath(), out);
   }
 
+  @Override
+  public void readVCFStatistics(String vcfName, OutputStream out) throws NoSuchElementException, IOException {
+    if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
+    Files.copy(getStatsFile(vcfName).toPath(), out);
+  }
+
   //
   // Private methods
   //
