@@ -60,10 +60,11 @@ public class JenniteVCFStore implements VCFStore {
   }
 
   @Override
-  public Collection<String> getSampleIds() {
-    Set<String> sampleIds = new LinkedHashSet<>();
-    getVCFNames().forEach(name -> {
-      File samplesFile = getSamplesFile(name);
+  public Collection<String> getSampleIds(String filename) {
+      Set<String> sampleIds = new LinkedHashSet<>();
+    Optional<String> vcfFile = getVCFNames().stream().filter(n -> n.equals(filename)).findFirst();
+    if (vcfFile.isPresent()) {
+      File samplesFile = getSamplesFile(vcfFile.get());
       if (samplesFile.exists()) {
         try (Stream<String> stream = Files.lines(samplesFile.toPath())) {
           stream.forEach(line -> sampleIds.add(line));
@@ -72,7 +73,15 @@ public class JenniteVCFStore implements VCFStore {
           e.printStackTrace();
         }
       }
-    });
+    }
+
+    return sampleIds;
+  }
+
+  @Override
+  public Collection<String> getSampleIds() {
+    Set<String> sampleIds = new LinkedHashSet<>();
+    getVCFNames().forEach(name -> sampleIds.addAll(getSampleIds(name)));
     return sampleIds;
   }
 
