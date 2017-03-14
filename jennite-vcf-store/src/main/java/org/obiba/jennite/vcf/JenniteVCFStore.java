@@ -12,6 +12,7 @@ package org.obiba.jennite.vcf;
 
 import org.obiba.core.util.FileUtil;
 import org.obiba.opal.spi.vcf.VCFStore;
+import org.obiba.opal.spi.vcf.VCFStoreException;
 import org.obiba.opal.spi.vcf.VCFStoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,8 +69,7 @@ public class JenniteVCFStore implements VCFStore {
         try (Stream<String> stream = Files.lines(samplesFile.toPath())) {
           stream.forEach(line -> sampleIds.add(line));
         } catch (IOException e) {
-          // TODO
-          e.printStackTrace();
+          log.warn("Failure when reading samples list: " + samplesFile.getAbsolutePath(), e);
         }
       }
     });
@@ -162,6 +162,8 @@ public class JenniteVCFStore implements VCFStore {
     File workDir = getVCFWorkFolder(vcfName);
     File samplesFile = new File(workDir, "samples_" + timestamp + ".txt");
     File outputFile = new File(workDir, "data_" + timestamp + ".vcf.gz");
+    outputFile.deleteOnExit();
+    samplesFile.deleteOnExit();
 
     try (BufferedWriter writer = Files.newBufferedWriter(samplesFile.toPath())) {
       for (String s : samples) {
@@ -170,13 +172,11 @@ public class JenniteVCFStore implements VCFStore {
       }
     }
 
-    // TODO check status
     int status = runProcess(vcfName, bcftools("view",
         "--samples-file", samplesFile.getAbsolutePath(),
         "--output-type", "z", // compressed VCF
         "--output-file", outputFile.getAbsolutePath()));
-    outputFile.deleteOnExit();
-    samplesFile.deleteOnExit();
+    if (status != 0) throw new VCFStoreException("VCF file subset by samples using bcftools failed.");
 
     Files.copy(outputFile.toPath(), out);
   }
@@ -192,27 +192,27 @@ public class JenniteVCFStore implements VCFStore {
   //
 
   private void compress(String vcfName) {
-    // TODO check process status
     File dataFile = new File(getVCFFolder(vcfName), VCF_FILE);
     if (!dataFile.exists()) return;
     int status = runProcess(vcfName, bgzip("-f", dataFile.getAbsolutePath()));
+    if (status != 0) throw new VCFStoreException("VCF file compression using bgzip failed");
   }
 
   private void index(String vcfName) {
-    // TODO check process status
     int status = runProcess(vcfName, tabix("-f", "-p", "vcf", getVCFGZFile(vcfName).getAbsolutePath()));
+    if (status != 0) throw new VCFStoreException("VCF file indexing using tabix failed");
   }
 
   private void listSamples(String vcfName) {
-    // TODO check process status
     int status = runProcess(vcfName, bcftools("query", "--list-samples", getVCFGZFile(vcfName).getAbsolutePath()),
         ProcessBuilder.Redirect.to(getSamplesFile(vcfName)));
+    if (status != 0) throw new VCFStoreException("VCF file samples listing using bcftools failed");
   }
 
   private void statistics(String vcfName) {
-    // TODO check process status
     int status = runProcess(vcfName, bcftools("stats", getVCFGZFile(vcfName).getAbsolutePath()),
         ProcessBuilder.Redirect.to(getStatsFile(vcfName)));
+    if (status != 0) throw new VCFStoreException("VCF file statistics extraction using bcftools failed");
   }
 
   private void properties(String vcfName, String originalVcfName) {
@@ -329,14 +329,32 @@ public class JenniteVCFStore implements VCFStore {
     return pb;
   }
 
+  /**
+   * Get bcftools command, for data extraction (samples, statistics, subset).
+   *
+   * @param args
+   * @return
+   */
   private String[] bcftools(String... args) {
     return getCommand("bcftools", args);
   }
 
+  /**
+   * Get bgzip command, for compression.
+   *
+   * @param args
+   * @return
+   */
   private String[] bgzip(String... args) {
     return getCommand("bgzip", args);
   }
 
+  /**
+   * Get tabix command, for indexing.
+   *
+   * @param args
+   * @return
+   */
   private String[] tabix(String... args) {
     return getCommand("tabix", args);
   }
