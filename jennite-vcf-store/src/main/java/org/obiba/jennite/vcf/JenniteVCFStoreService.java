@@ -37,6 +37,11 @@ public class JenniteVCFStoreService implements VCFStoreService {
   }
 
   @Override
+  public Properties getProperties() {
+    return properties;
+  }
+
+  @Override
   public void configure(Properties properties) {
     this.properties = properties;
   }
