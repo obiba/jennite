@@ -11,6 +11,8 @@
 package org.obiba.jennite.vcf;
 
 import org.obiba.opal.spi.vcf.VCFStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -22,11 +24,15 @@ import java.util.stream.Stream;
 
 public class JenniteVCFSummary implements VCFStore.VCFSummary {
 
+  private static final Logger log = LoggerFactory.getLogger(JenniteVCFSummary.class);
+
   private static final String SN_RECORDS = "SN\t0\tnumber of records:\t";
 
   private static final String SN_SNPS = "SN\t0\tnumber of SNPs:\t";
 
   private final String name;
+
+  private VCFStore.Format format;
 
   private List<String> sampleIds = new ArrayList<>();
 
@@ -43,6 +49,11 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public VCFStore.Format getFormat() {
+    return format;
   }
 
   @Override
@@ -76,6 +87,11 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
       this.summary = new JenniteVCFSummary(name);
     }
 
+    Builder format(VCFStore.Format format) {
+      summary.format = format;
+      return this;
+    }
+
     Builder size(File dataFile) {
       summary.size = dataFile.length();
       return this;
@@ -86,7 +102,7 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
       try (Stream<String> stream = Files.lines(samplesFile.toPath())) {
         stream.forEach(line -> summary.sampleIds.add(line));
       } catch (IOException e) {
-        e.printStackTrace();
+        log.error("Unable to read samples file: {}", samplesFile.getAbsolutePath(), e);
       }
       return this;
     }
@@ -109,20 +125,21 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
           stop = summary.variantsCount != 0 && summary.genotypesCount != 0;
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        log.error("Unable to read statistics file: {}", statsFile.getAbsolutePath(), e);
       }
       return this;
     }
 
-    public Builder properties(File vcfPropertiesFile) {
+    Builder properties(File vcfPropertiesFile) {
       try (InputStream in = new FileInputStream(vcfPropertiesFile)) {
         Properties prop = new Properties();
         prop.load(in);
         summary.genotypesCount = Integer.parseInt(prop.getProperty("summary.genotypes.count"));
         summary.variantsCount = Integer.parseInt(prop.getProperty("summary.variants.count"));
         summary.size = Long.parseLong(prop.getProperty("summary.size"));
+        summary.format = VCFStore.Format.valueOf(prop.getProperty("summary.format", "VCF"));
       } catch (IOException e) {
-        e.printStackTrace();
+        log.error("Unable to read properties file: {}", vcfPropertiesFile.getAbsolutePath(), e);
       }
       return this;
     }

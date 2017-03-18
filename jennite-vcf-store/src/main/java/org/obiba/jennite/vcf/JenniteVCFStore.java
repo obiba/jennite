@@ -34,9 +34,15 @@ public class JenniteVCFStore implements VCFStore {
 
   private static final String VCF_FILE = "data.vcf";
 
-  private static final String VCF_GZ_FILE = "data.vcf.gz";
+  private static final String BCF_FILE = "data.bcf";
+
+  private static final String VCF_GZ_FILE = VCF_FILE + ".gz";
+
+  private static final String BCF_GZ_FILE = BCF_FILE + ".gz";
 
   private static final String VCF_GZ_INDEX = VCF_GZ_FILE + ".tbi";
+
+  private static final String BCF_GZ_INDEX = BCF_GZ_FILE + ".csi";
 
   private static final String SAMPLES_FILE = "samples.txt";
 
@@ -102,7 +108,7 @@ public class JenniteVCFStore implements VCFStore {
   }
 
   /**
-   * Prepare VCF folder and write VCF file, compress it if necessary and index it (requires VCF to be sorted).
+   * Prepare VCF folder and write VCF/BCF file, compress it if necessary and index it (requires VCF/BCF to be sorted).
    *
    * @param vcfName
    * @param vcf
@@ -112,14 +118,26 @@ public class JenniteVCFStore implements VCFStore {
   public void writeVCF(String vcfName, InputStream vcf) throws IOException {
     // writing a VCF is making a directory with the compressed and indexed VCF file
     String store;
+    Format format = Format.VCF;
     boolean isCompressed = false;
-    if (vcfName.endsWith(".vcf")) store = vcfName.replaceAll("\\.vcf$", "");
+    if (vcfName.endsWith(".vcf")) {
+      store = vcfName.replaceAll("\\.vcf$", "");
+    }
     else if (vcfName.endsWith(".vcf.gz")) {
       store = vcfName.replaceAll("\\.vcf.gz$", "");
       isCompressed = true;
     }
+    else if (vcfName.endsWith(".bcf")) {
+      store = vcfName.replaceAll("\\.bcf$", "");
+      format = Format.BCF;
+    }
+    else if (vcfName.endsWith(".bcf.gz")) {
+      store = vcfName.replaceAll("\\.bcf.gz$", "");
+      isCompressed = true;
+      format = Format.BCF;
+    }
     else {
-      // assume it is a compressed file
+      // assume it is a compressed VCF file
       store = vcfName;
       isCompressed = true;
     }
@@ -128,10 +146,10 @@ public class JenniteVCFStore implements VCFStore {
     File vcfFolder = getVCFFolder(store);
     if (vcfFolder.exists()) FileUtil.delete(vcfFolder);
     vcfFolder.mkdirs();
-    File destination = isCompressed ? getVCFGZFile(store) : new File(getVCFFolder(store), VCF_FILE);
+    File destination = isCompressed ? getVCFGZFile(store, format) : new File(getVCFFolder(store), format.equals(Format.VCF) ? VCF_FILE : BCF_FILE);
     Files.copy(vcf, destination.toPath());
 
-    if (!isCompressed) compress(store);
+    if (!isCompressed) compress(store, format);
     index(store);
     listSamples(store);
     statistics(store);
@@ -151,17 +169,43 @@ public class JenniteVCFStore implements VCFStore {
 
   @Override
   public void readVCF(String vcfName, OutputStream out) throws NoSuchElementException, IOException {
+    readVCF(vcfName, getFormat(vcfName), out);
+  }
+
+  @Override
+  public void readVCF(String vcfName, Format format, OutputStream out) throws NoSuchElementException, IOException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
-    Files.copy(getVCFGZFile(vcfName).toPath(), out);
+    if (getFormat(vcfName) == format)
+      Files.copy(getVCFGZFile(vcfName).toPath(), out);
+    else {
+      // need to convert VCF format flavour
+      String timestamp = dateTimeFormatter.format(System.currentTimeMillis());
+      File workDir = getVCFWorkFolder(vcfName);
+      File outputFile = new File(workDir, "data_" + timestamp + "." + format.name().toLowerCase() + ".gz");
+      outputFile.deleteOnExit();
+
+      String outputType = Format.VCF == format ? "z" : "b";
+      int status = runProcess(vcfName, bcftools("view",
+          "--output-type", outputType, // compressed VCF/BCF
+          "--output-file", outputFile.getAbsolutePath()));
+      if (status != 0) throw new VCFStoreException("VCF/BCF file format conversion using bcftools failed.");
+
+      Files.copy(outputFile.toPath(), out);
+    }
   }
 
   @Override
   public void readVCF(String vcfName, OutputStream out, Collection<String> samples) throws NoSuchElementException, IOException {
+    readVCF(vcfName, getFormat(vcfName), out, samples);
+  }
+
+  @Override
+  public void readVCF(String vcfName, Format format, OutputStream out, Collection<String> samples) throws NoSuchElementException, IOException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
     String timestamp = dateTimeFormatter.format(System.currentTimeMillis());
     File workDir = getVCFWorkFolder(vcfName);
     File samplesFile = new File(workDir, "samples_" + timestamp + ".txt");
-    File outputFile = new File(workDir, "data_" + timestamp + ".vcf.gz");
+    File outputFile = new File(workDir, "data_" + timestamp + "." + format.name().toLowerCase() + ".gz");
     outputFile.deleteOnExit();
     samplesFile.deleteOnExit();
 
@@ -172,11 +216,12 @@ public class JenniteVCFStore implements VCFStore {
       }
     }
 
+    String outputType = Format.VCF == format ? "z" : "b";
     int status = runProcess(vcfName, bcftools("view",
         "--samples-file", samplesFile.getAbsolutePath(),
-        "--output-type", "z", // compressed VCF
+        "--output-type", outputType, // compressed VCF/BCF
         "--output-file", outputFile.getAbsolutePath()));
-    if (status != 0) throw new VCFStoreException("VCF file subset by samples using bcftools failed.");
+    if (status != 0) throw new VCFStoreException("VCF/BCF file subset by samples using bcftools failed.");
 
     Files.copy(outputFile.toPath(), out);
   }
@@ -191,28 +236,28 @@ public class JenniteVCFStore implements VCFStore {
   // Private methods
   //
 
-  private void compress(String vcfName) {
-    File dataFile = new File(getVCFFolder(vcfName), VCF_FILE);
+  private void compress(String vcfName, Format format) {
+    File dataFile = new File(getVCFFolder(vcfName), Format.VCF == format ? VCF_FILE : BCF_FILE);
     if (!dataFile.exists()) return;
     int status = runProcess(vcfName, bgzip("-f", dataFile.getAbsolutePath()));
-    if (status != 0) throw new VCFStoreException("VCF file compression using bgzip failed");
+    if (status != 0) throw new VCFStoreException("VCF/BCF file compression using bgzip failed");
   }
 
   private void index(String vcfName) {
-    int status = runProcess(vcfName, tabix("-f", "-p", "vcf", getVCFGZFile(vcfName).getAbsolutePath()));
-    if (status != 0) throw new VCFStoreException("VCF file indexing using tabix failed");
+    int status = runProcess(vcfName, tabix("-f", "-p", getFormat(vcfName).name().toLowerCase(), getVCFGZFile(vcfName).getAbsolutePath()));
+    if (status != 0) throw new VCFStoreException("VCF/BCF file indexing using tabix failed");
   }
 
   private void listSamples(String vcfName) {
     int status = runProcess(vcfName, bcftools("query", "--list-samples", getVCFGZFile(vcfName).getAbsolutePath()),
         ProcessBuilder.Redirect.to(getSamplesFile(vcfName)));
-    if (status != 0) throw new VCFStoreException("VCF file samples listing using bcftools failed");
+    if (status != 0) throw new VCFStoreException("VCF/BCF file samples listing using bcftools failed");
   }
 
   private void statistics(String vcfName) {
     int status = runProcess(vcfName, bcftools("stats", getVCFGZFile(vcfName).getAbsolutePath()),
         ProcessBuilder.Redirect.to(getStatsFile(vcfName)));
-    if (status != 0) throw new VCFStoreException("VCF file statistics extraction using bcftools failed");
+    if (status != 0) throw new VCFStoreException("VCF/BCF file statistics extraction using bcftools failed");
   }
 
   private void properties(String vcfName, String originalVcfName) {
@@ -222,8 +267,10 @@ public class JenniteVCFStore implements VCFStore {
       prop.setProperty("name", vcfName);
       prop.setProperty("name.original", originalVcfName);
       prop.setProperty("version", properties.getProperty("version"));
-      VCFSummary summary = JenniteVCFSummary.newSummary(vcfName).size(getVCFGZFile(vcfName)).samples(getSamplesFile(vcfName))
+      VCFSummary summary = JenniteVCFSummary.newSummary(vcfName).format(getFormat(vcfName))
+          .size(getVCFGZFile(vcfName)).samples(getSamplesFile(vcfName))
           .statistics(getStatsFile(vcfName)).build();
+      prop.setProperty("summary.format", summary.getFormat().name());
       prop.setProperty("summary.genotypes.count", "" + summary.getGenotypesCount());
       prop.setProperty("summary.variants.count", "" + summary.getVariantsCount());
       prop.setProperty("summary.size", "" + summary.size());
@@ -257,13 +304,37 @@ public class JenniteVCFStore implements VCFStore {
   }
 
   /**
-   * Get VCF compressed file location.
+   * Get VCF/BCF compressed file location by specifying the format.
+   *
+   * @param vcfName
+   * @param format
+   * @return
+   */
+  private File getVCFGZFile(String vcfName, Format format) {
+    return Format.VCF == format ?
+        new File(getVCFFolder(vcfName), VCF_GZ_FILE) :
+        new File(getVCFFolder(vcfName), BCF_GZ_FILE);
+  }
+
+  /**
+   * Get VCF/BCF compressed file location.
    *
    * @param vcfName
    * @return
    */
   private File getVCFGZFile(String vcfName) {
-    return new File(getVCFFolder(vcfName), VCF_GZ_FILE);
+    File dataFile = new File(getVCFFolder(vcfName), VCF_GZ_FILE);
+    return dataFile.exists() ? dataFile : new File(getVCFFolder(vcfName), BCF_GZ_FILE);
+  }
+
+  /**
+   * Get the VCF file format flavour.
+   *
+   * @param vcfName
+   * @return
+   */
+  private Format getFormat(String vcfName) {
+    return getVCFGZFile(vcfName).getName().equals(VCF_GZ_FILE) ? Format.VCF : Format.BCF;
   }
 
   /**
