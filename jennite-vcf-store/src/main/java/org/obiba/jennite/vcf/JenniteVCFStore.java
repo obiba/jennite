@@ -232,6 +232,20 @@ public class JenniteVCFStore implements VCFStore {
     Files.copy(getStatsFile(vcfName).toPath(), out);
   }
 
+  @Override
+  public void filter(String vcfName, Format format, String commaSeparatedSampleIds, File destination) throws NoSuchElementException, IOException {
+    if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
+    String outputType = Format.VCF == format ? "-Oz" : "-Ob";
+    int status = runProcess(vcfName, bcftools("view",
+        "--force-samples",
+        outputType,
+        "-s",
+        commaSeparatedSampleIds,
+        getVCFGZFile(vcfName).getAbsolutePath(),
+        "-o", destination.getAbsolutePath()));
+    if (status != 0) throw new VCFStoreException("VCF/BCF file sample id filter using bcftools failed");
+  }
+
   //
   // Private methods
   //
