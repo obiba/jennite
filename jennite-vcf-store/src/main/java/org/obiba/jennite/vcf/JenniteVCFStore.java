@@ -187,7 +187,8 @@ public class JenniteVCFStore implements VCFStore {
       String outputType = Format.VCF == format ? "z" : "b";
       int status = runProcess(vcfName, bcftools("view",
           "--output-type", outputType, // compressed VCF/BCF
-          "--output-file", outputFile.getAbsolutePath()));
+          "--output-file", outputFile.getAbsolutePath(),
+          getVCFGZFile(vcfName).getAbsolutePath()));
       if (status != 0) throw new VCFStoreException("VCF/BCF file format conversion using bcftools failed.");
 
       Files.copy(outputFile.toPath(), out);
@@ -202,6 +203,10 @@ public class JenniteVCFStore implements VCFStore {
   @Override
   public void readVCF(String vcfName, Format format, OutputStream out, Collection<String> samples) throws NoSuchElementException, IOException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
+    if (samples == null || samples.isEmpty()) {
+      readVCF(vcfName, format, out);
+      return;
+    }
     String timestamp = dateTimeFormatter.format(System.currentTimeMillis());
     File workDir = getVCFWorkFolder(vcfName);
     File samplesFile = new File(workDir, "samples_" + timestamp + ".txt");
@@ -219,8 +224,10 @@ public class JenniteVCFStore implements VCFStore {
     String outputType = Format.VCF == format ? "z" : "b";
     int status = runProcess(vcfName, bcftools("view",
         "--samples-file", samplesFile.getAbsolutePath(),
+        "--force-samples", // do not fail if there are unknown samples
         "--output-type", outputType, // compressed VCF/BCF
-        "--output-file", outputFile.getAbsolutePath()));
+        "--output-file", outputFile.getAbsolutePath(),
+        getVCFGZFile(vcfName).getAbsolutePath()));
     if (status != 0) throw new VCFStoreException("VCF/BCF file subset by samples using bcftools failed.");
 
     Files.copy(outputFile.toPath(), out);
@@ -230,20 +237,6 @@ public class JenniteVCFStore implements VCFStore {
   public void readVCFStatistics(String vcfName, OutputStream out) throws NoSuchElementException, IOException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
     Files.copy(getStatsFile(vcfName).toPath(), out);
-  }
-
-  @Override
-  public void filter(String vcfName, Format format, String commaSeparatedSampleIds, File destination) throws NoSuchElementException, IOException {
-    if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
-    String outputType = Format.VCF == format ? "-Oz" : "-Ob";
-    int status = runProcess(vcfName, bcftools("view",
-        "--force-samples",
-        outputType,
-        "-s",
-        commaSeparatedSampleIds,
-        getVCFGZFile(vcfName).getAbsolutePath(),
-        "-o", destination.getAbsolutePath()));
-    if (status != 0) throw new VCFStoreException("VCF/BCF file sample id filter using bcftools failed");
   }
 
   //
