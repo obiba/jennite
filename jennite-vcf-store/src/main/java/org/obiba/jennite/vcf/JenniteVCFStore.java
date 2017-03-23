@@ -201,17 +201,7 @@ public class JenniteVCFStore implements VCFStore {
   }
 
   @Override
-  public void readVCF(String vcfName, OutputStream out, Collection<String> samples, boolean includeSamples) throws NoSuchElementException, IOException {
-    readVCF(vcfName, getFormat(vcfName), out, samples, includeSamples);
-  }
-
-  @Override
   public void readVCF(String vcfName, Format format, OutputStream out, Collection<String> samples) throws NoSuchElementException, IOException {
-    readVCF(vcfName, format, out, samples, true);
-  }
-
-  @Override
-  public void readVCF(String vcfName, Format format, OutputStream out, Collection<String> samples, boolean includeSamples) throws NoSuchElementException, IOException {
     if (!hasVCF(vcfName)) throw new NoSuchElementException("No VCF with name '" + vcfName + "' can be found");
     if (samples == null || samples.isEmpty()) {
       readVCF(vcfName, format, out);
@@ -233,7 +223,7 @@ public class JenniteVCFStore implements VCFStore {
 
     String outputType = Format.VCF == format ? "z" : "b";
     int status = runProcess(vcfName, bcftools("view",
-        "--samples-file", includeSamples ? samplesFile.getAbsolutePath() : "^" + samplesFile.getAbsolutePath(),
+        "--samples-file", samplesFile.getAbsolutePath(),
         "--force-samples", // do not fail if there are unknown samples
         "--output-type", outputType, // compressed VCF/BCF
         "--output-file", outputFile.getAbsolutePath(),
