@@ -124,7 +124,7 @@ public class JenniteVCFStore implements VCFStore {
       store = vcfName.replaceAll("\\.vcf$", "");
     }
     else if (vcfName.endsWith(".vcf.gz")) {
-      store = vcfName.replaceAll("\\.vcf.gz$", "");
+      store = vcfName.replaceAll("\\.vcf\\.gz$", "");
       isCompressed = true;
     }
     else if (vcfName.endsWith(".bcf")) {
@@ -132,7 +132,7 @@ public class JenniteVCFStore implements VCFStore {
       format = Format.BCF;
     }
     else if (vcfName.endsWith(".bcf.gz")) {
-      store = vcfName.replaceAll("\\.bcf.gz$", "");
+      store = vcfName.replaceAll("\\.bcf\\.gz$", "");
       isCompressed = true;
       format = Format.BCF;
     }
