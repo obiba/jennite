@@ -137,7 +137,7 @@
                   <target>
                     <property name="deb.version" value="${project.version}-b${buildNumber}" />
                     <!-- Deploy deb file in deb repo -->
-                    <copy file="target/jennite-vcf-store-${deb.version}_all.deb" todir="${obiba.deb.dir}/${jennite.deploy.dir}" />
+                    <copy file="target/jennite-vcf-store_${deb.version}_all.deb" todir="${obiba.deb.dir}/${jennite.deploy.dir}" />
                   </target>
                 </configuration>
               </execution>
