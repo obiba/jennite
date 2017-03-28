@@ -91,6 +91,57 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
               <execution>
+                <id>make-deb</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <echo message="Starting ant-run target configuration." />
+                    <property name="deb.dir" value="${basedir}/target/deb" />
+                    <property name="deb.version" value="${project.version}-b${buildNumber}" />
+                    <tstamp>
+                      <!-- http://www.debian.org/doc/debian-policy/ch-source.html -->
+                      <format property="deb.date" pattern="EEE, d MMM yyyy HH:mm:ss Z" locale="en" />
+                    </tstamp>
+
+                    <mkdir dir="${deb.dir}/usr/share" />
+                    <unzip src="${basedir}/target/jennite-vcf-store-${project.version}-dist.zip" dest="${deb.dir}/usr/share" />
+
+                    <copy todir="${deb.dir}">
+                      <fileset dir="src/main/dist/deb" />
+                      <filterset>
+                        <filter token="project.version" value="${deb.version}" />
+                        <filter token="date" value="${deb.date}" />
+                      </filterset>
+                    </copy>
+
+                    <exec executable="debuild" dir="${deb.dir}" failonerror="true" osfamily="unix">
+                      <arg value="-b" />
+                      <!-- Uncomment following options to package locally  -->
+                      <!--<arg value="-i" />-->
+                      <!--<arg value="-us" />-->
+                      <!--<arg value="-uc" />-->
+                    </exec>
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>deploy-deb</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <property name="deb.version" value="${project.version}-b${buildNumber}" />
+                    <!-- Deploy deb file in deb repo -->
+                    <copy file="target/jennite-vcf-store-${deb.version}_all.deb" todir="${obiba.deb.dir}/${jennite.deploy.dir}" />
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
                 <id>deploy-package</id>
                 <phase>deploy</phase>
                 <goals>
@@ -110,4 +161,10 @@
     </profile>
   </profiles>
 
+  <properties>
+    <install.dir>/usr/share</install.dir>
+    <agate.dir>${install.dir}/jennite-vcf-store-${project.version}</agate.dir>
+    <package.name>jennite-vcf-store-dist-${project.version}</package.name>
+    <dist.location>${basedir}/target/${package.name}-dist/${package.name}</dist.location>
+  </properties>
 </project>
