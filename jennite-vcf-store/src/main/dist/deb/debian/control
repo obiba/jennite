@@ -1,0 +1,21 @@
+Source: jennite-vcf-store
+Section: devel
+Priority: extra
+Maintainer: OBiBa <info@obiba.org>
+Build-Depends: debhelper (>= 7.0.15)
+Standards-Version: 3.8.4
+Homepage: http://www.obiba.org
+
+Package: jennite-vcf-store
+Architecture: all
+Pre-Depends:
+Depends: opal (>= 2.9), bcftools (>= 1.2), tabix (>= 1.2)
+Description: OBiBa Opal Jennite VCF Store
+ Opal Jennite VCF Store configures dependencies for using R server with Opal.
+ .
+ OBiBa is an international software development project committed to building a
+ full suite of open source software for biobanks. It is comprised of several
+ independent and self-funded teams around the world, each of which is producing
+ stand-alone applications that support particular biobank activities. The
+ applications can be customized and integrated to create a complete biobank
+ information management system.
