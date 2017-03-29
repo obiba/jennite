@@ -150,7 +150,7 @@
                 <configuration>
                   <target>
                     <!-- Deploy Opal package file in download repo -->
-                    <copy todir="${obiba.download.dir}/jennite/${jennite.deploy.dir}" file="target/jennite-vcf-store-${project.version}-dist.zip" />
+                    <copy todir="${obiba.download.dir}/plugins/${obiba.deploy.dir}" file="target/jennite-vcf-store-${project.version}-dist.zip" />
                   </target>
                 </configuration>
               </execution>
