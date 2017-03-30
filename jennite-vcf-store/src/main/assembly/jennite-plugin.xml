@@ -19,6 +19,7 @@
       <directory>src/main/conf</directory>
       <outputDirectory>.</outputDirectory>
       <excludes>
+        <exclude>LICENSE.txt</exclude>
         <exclude>README.md</exclude>
         <exclude>plugin.properties</exclude>
         <exclude>site.properties</exclude>
@@ -28,6 +29,7 @@
       <directory>target</directory>
       <outputDirectory>.</outputDirectory>
       <includes>
+        <include>LICENSE.txt</include>
         <include>README.md</include>
         <include>plugin.properties</include>
         <include>site.properties</include>
