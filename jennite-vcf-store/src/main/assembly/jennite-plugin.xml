@@ -19,14 +19,18 @@
       <directory>src/main/conf</directory>
       <outputDirectory>.</outputDirectory>
       <excludes>
+        <exclude>README.md</exclude>
         <exclude>plugin.properties</exclude>
+        <exclude>site.properties</exclude>
       </excludes>
     </fileSet>
     <fileSet>
       <directory>target</directory>
       <outputDirectory>.</outputDirectory>
       <includes>
+        <include>README.md</include>
         <include>plugin.properties</include>
+        <include>site.properties</include>
       </includes>
     </fileSet>
   </fileSets>

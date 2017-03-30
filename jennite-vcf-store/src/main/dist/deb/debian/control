@@ -11,7 +11,7 @@ Architecture: all
 Pre-Depends:
 Depends: opal (>= 2.9), bcftools (>= 1.2), tabix (>= 1.2)
 Description: OBiBa Opal Jennite VCF Store
- Opal Jennite VCF Store configures dependencies for using R server with Opal.
+ Opal Jennite VCF Store installs VCF Store Opal plugin with system dependencies.
  .
  OBiBa is an international software development project committed to building a
  full suite of open source software for biobanks. It is comprised of several
