@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for opal-rserver
+# postinst script for jennite
 #
 # see: dh_installdeb(1)
 
@@ -14,8 +14,7 @@ case "$1" in
         . /etc/default/opal
         mkdir -p $OPAL_HOME/plugins
         if [ -d "$OPAL_HOME"/plugins ]; then
-          rm -rf $OPAL_HOME/plugins/jennite-vcf-store
-          cp -r /usr/share/jennite* $OPAL_HOME/plugins/jennite-vcf-store
+          cp -r /usr/share/jennite* $OPAL_HOME/plugins
           chown -R opal:adm $OPAL_HOME/plugins
           echo '***'
           echo '*** IMPORTANT: Jennnite VCF Store plugin has been installed, you must restart Opal server.'
