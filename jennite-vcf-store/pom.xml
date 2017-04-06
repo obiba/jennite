@@ -163,6 +163,69 @@
                   </target>
                 </configuration>
               </execution>
+              <execution>
+                <id>deploy-rpm</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <!-- Deploy rpm file in rpm repo -->
+                    <copy todir="${obiba.rpm.dir}/${jennite.deploy.dir}">
+                      <fileset dir="target/rpm/jennite/RPMS/noarch" />
+                    </copy>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>rpm-maven-plugin</artifactId>
+            <version>${rpm-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>make-rpm</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>attached-rpm</goal>
+                </goals>
+                <configuration>
+                  <name>jennite</name>
+                  <needarch>noarch</needarch>
+                  <version>${project.version}</version>
+                  <license>see /usr/share/doc/opal/copyright</license>
+                  <group>Applications/Engineering</group>
+                  <packager>OBiBa</packager>
+                  <prefix>/usr/share</prefix>
+                  <changelogFile>/usr/share/changelog</changelogFile>
+                  <targetOS>Linux</targetOS>
+                  <requires>
+                    <require>opal-server</require>
+                    <require>unzip</require>
+                  </requires>
+                  <postinstallScriptlet>
+                    <scriptFile>src/main/dist/rpm/scripts/postinstall.sh</scriptFile>
+                    <fileEncoding>utf-8</fileEncoding>
+                  </postinstallScriptlet>
+
+                  <mappings>
+                    <mapping>
+                      <directory>/usr/share/jennite</directory>
+                      <filemode>640</filemode>
+                      <username>opal</username>
+                      <groupname>adm</groupname>
+                      <configuration>true</configuration>
+                      <sources>
+                        <source>
+                          <location>${basedir}/target/jennite-vcf-store-${project.version}-dist.zip</location>
+                        </source>
+                      </sources>
+                    </mapping>
+                  </mappings>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
         </plugins>
@@ -171,9 +234,12 @@
   </profiles>
 
   <properties>
+    <jennite.deploy.dir>unstable</jennite.deploy.dir>
     <install.dir>/usr/share</install.dir>
     <agate.dir>${install.dir}/jennite-vcf-store-${project.version}</agate.dir>
     <package.name>jennite-vcf-store-dist-${project.version}</package.name>
     <dist.location>${basedir}/target/${package.name}-dist/${package.name}</dist.location>
+    <rpm-maven-plugin.version>2.1.4</rpm-maven-plugin.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 </project>
