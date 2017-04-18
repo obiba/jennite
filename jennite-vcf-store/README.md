@@ -21,7 +21,7 @@ These tools can be installed as system-specific packages or compiled from source
 
 ## Download
 
-See download and installation instructions [Opal Plugins Installation Guide](https://wiki.obiba.org/display/OPALDOCDEV/Opal+Plugins+Installation+Guide)
+See download and installation instructions [Opal Plugins Installation Guide](https://wiki.obiba.org/display/OPALDOC/Opal+Plugins+Installation+Guide)
 
 ## Bug tracker
 
