@@ -28,7 +28,7 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
 
   private static final String SN_RECORDS = "SN\t0\tnumber of records:\t";
 
-  private static final String SN_SNPS = "SN\t0\tnumber of SNPs:\t";
+  private static final String SN_SAMPLES = "SN\t0\tnumber of samples:\t";
 
   private final String name;
 
@@ -38,7 +38,7 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
 
   private int variantsCount = 0;
 
-  private int genotypesCount = 0;
+  private long genotypesCount = 0;
 
   private long size;
 
@@ -68,7 +68,8 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
 
   @Override
   public int getGenotypesCount() {
-    return genotypesCount;
+    // broken when bigger than a int
+    return (int)genotypesCount;
   }
 
   @Override
@@ -112,18 +113,21 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
       try (BufferedReader br = new BufferedReader(new FileReader(statsFile))) {
         String line;
         boolean stop = false;
+        int samplesCount = 0;
         while (!stop && (line = br.readLine()) != null) {
           try {
             if (line.startsWith(SN_RECORDS)) {
-              summary.genotypesCount = Integer.parseInt(line.replace(SN_RECORDS, ""));
-            } else if (line.startsWith(SN_SNPS)) {
-              summary.variantsCount = Integer.parseInt(line.replace(SN_SNPS, ""));
+              summary.variantsCount = Integer.parseInt(line.replace(SN_RECORDS, ""));
+            } else if (line.startsWith(SN_SAMPLES)) {
+              samplesCount = Integer.parseInt(line.replace(SN_SAMPLES, ""));
             }
           } catch (NumberFormatException e) {
             // ignore
           }
-          stop = summary.variantsCount != 0 && summary.genotypesCount != 0;
+          stop = summary.variantsCount != 0 && samplesCount != 0;
         }
+        // approximate: ignore missing calls
+        summary.genotypesCount = samplesCount * (long)summary.variantsCount;
       } catch (IOException e) {
         log.error("Unable to read statistics file: {}", statsFile.getAbsolutePath(), e);
       }
@@ -134,10 +138,18 @@ public class JenniteVCFSummary implements VCFStore.VCFSummary {
       try (InputStream in = new FileInputStream(vcfPropertiesFile)) {
         Properties prop = new Properties();
         prop.load(in);
-        summary.genotypesCount = Integer.parseInt(prop.getProperty("summary.genotypes.count"));
+        String version = prop.getProperty("version");
+        Long genotypesCount = Long.parseLong(prop.getProperty("summary.genotypes.count"));
         summary.variantsCount = Integer.parseInt(prop.getProperty("summary.variants.count"));
         summary.size = Long.parseLong(prop.getProperty("summary.size"));
         summary.format = VCFStore.Format.valueOf(prop.getProperty("summary.format", "VCF"));
+        // fix counts issue in 1.0.0
+        if ("1.0.0".equals(version) || version.startsWith("0.1")) {
+          summary.variantsCount = genotypesCount.intValue();
+          summary.genotypesCount = Long.parseLong(prop.getProperty("summary.samples.count")) * (long)summary.variantsCount;
+        } else {
+          summary.genotypesCount = genotypesCount;
+        }
       } catch (IOException e) {
         log.error("Unable to read properties file: {}", vcfPropertiesFile.getAbsolutePath(), e);
       }
