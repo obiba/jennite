@@ -233,7 +233,6 @@
   </profiles>
 
   <properties>
-    <obiba.deploy.dir>unstable</obiba.deploy.dir>
     <install.dir>/usr/share</install.dir>
     <agate.dir>${install.dir}/jennite-vcf-store-${project.version}</agate.dir>
     <package.name>jennite-vcf-store-dist-${project.version}</package.name>
