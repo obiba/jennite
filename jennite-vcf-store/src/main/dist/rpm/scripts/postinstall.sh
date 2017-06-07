@@ -29,10 +29,10 @@ case "$1" in
         if [ -d "$OPAL_HOME"/plugins ]; then
 
           OLD_PLUGIN=$(ls -t "$OPAL_HOME"/plugins/ | grep jennite-vcf-store | head -1)
-          NEW_PLUGIN=$(ls -t /usr/share/jennite/ | grep jennite-vcf-store | head -1 | sed s/\-dist\.zip//g)
+          NEW_PLUGIN=$(ls -t /usr/share/jennite-vcf-store/ | grep jennite-vcf-store | head -1 | sed s/\-dist\.zip//g)
           NEW_PLUGIN_ZIP="$NEW_PLUGIN-dist.zip"
 
-          unzip /usr/share/jennite/$NEW_PLUGIN_ZIP -d $OPAL_HOME/plugins/
+          unzip /usr/share/jennite-vcf-store/$NEW_PLUGIN_ZIP -d $OPAL_HOME/plugins/
           touch $OPAL_HOME/plugins/$NEW_PLUGIN
 
           if [ ! -z "$OLD_PLUGIN" ] && [ -f $OPAL_HOME/plugins/$OLD_PLUGIN/site.properties ]; then
