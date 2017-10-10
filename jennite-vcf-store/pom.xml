@@ -171,8 +171,8 @@
                 <configuration>
                   <target>
                     <!-- Deploy rpm file in rpm repo -->
-                    <copy todir="${obiba.rpm.dir}/${jennite.deploy.dir}">
-                      <fileset dir="target/rpm/jennite/RPMS/noarch" />
+                    <copy todir="${obiba.rpm.dir}/${obiba.deploy.dir}">
+                      <fileset dir="target/rpm/jennite-vcf-store/RPMS/noarch" />
                     </copy>
                   </target>
                 </configuration>
@@ -191,7 +191,7 @@
                   <goal>attached-rpm</goal>
                 </goals>
                 <configuration>
-                  <name>jennite</name>
+                  <name>jennite-vcf-store</name>
                   <needarch>noarch</needarch>
                   <version>${project.version}</version>
                   <license>see /usr/share/doc/opal/copyright</license>
@@ -211,7 +211,7 @@
 
                   <mappings>
                     <mapping>
-                      <directory>/usr/share/jennite</directory>
+                      <directory>/usr/share/jennite-vcf-store</directory>
                       <filemode>640</filemode>
                       <username>opal</username>
                       <groupname>adm</groupname>
@@ -233,7 +233,6 @@
   </profiles>
 
   <properties>
-    <jennite.deploy.dir>unstable</jennite.deploy.dir>
     <install.dir>/usr/share</install.dir>
     <agate.dir>${install.dir}/jennite-vcf-store-${project.version}</agate.dir>
     <package.name>jennite-vcf-store-dist-${project.version}</package.name>
