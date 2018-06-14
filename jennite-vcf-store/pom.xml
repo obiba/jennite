@@ -11,7 +11,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Jennite VCF Store</name>
+  <name>jennite-vcf-store</name>
 
   <parent>
     <groupId>org.obiba.jennite</groupId>
@@ -86,13 +86,24 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Disable default deployer. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${maven-deploy-plugin.version}</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
   <profiles>
     <profile>
       <!-- A profile for the builds performed by the continuous integration server -->
-      <id>ci-build</id>
+      <id>release</id>
       <build>
         <plugins>
           <plugin>
@@ -115,7 +126,7 @@
                     </tstamp>
 
                     <mkdir dir="${deb.dir}/usr/share" />
-                    <unzip src="${basedir}/target/jennite-vcf-store-${project.version}-dist.zip" dest="${deb.dir}/usr/share" />
+                    <unzip src="${basedir}/target/${project.name}-${project.version}-dist.zip" dest="${deb.dir}/usr/share" />
 
                     <copy todir="${deb.dir}">
                       <fileset dir="src/main/dist/deb" />
@@ -127,53 +138,10 @@
 
                     <exec executable="debuild" dir="${deb.dir}" failonerror="true" osfamily="unix">
                       <arg value="-b" />
-                      <!-- Uncomment following options to package locally  -->
-                      <!--<arg value="-i" />-->
-                      <!--<arg value="-us" />-->
-                      <!--<arg value="-uc" />-->
+                      <arg value="-i" />
+                      <arg value="-us" />
+                      <arg value="-uc" />
                     </exec>
-                  </target>
-                </configuration>
-              </execution>
-              <execution>
-                <id>deploy-deb</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <property name="deb.version" value="${project.version}-b${buildNumber}" />
-                    <!-- Deploy deb file in deb repo -->
-                    <copy file="target/jennite-vcf-store_${deb.version}_all.deb" todir="${obiba.deb.dir}/${obiba.deploy.dir}" />
-                  </target>
-                </configuration>
-              </execution>
-              <execution>
-                <id>deploy-package</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <!-- Deploy Opal package file in download repo -->
-                    <copy todir="${obiba.download.dir}/plugins/${obiba.deploy.dir}" file="target/jennite-vcf-store-${project.version}-dist.zip" />
-                  </target>
-                </configuration>
-              </execution>
-              <execution>
-                <id>deploy-rpm</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <!-- Deploy rpm file in rpm repo -->
-                    <copy todir="${obiba.rpm.dir}/${obiba.deploy.dir}">
-                      <fileset dir="target/rpm/jennite-vcf-store/RPMS/noarch" />
-                    </copy>
                   </target>
                 </configuration>
               </execution>
@@ -191,10 +159,10 @@
                   <goal>attached-rpm</goal>
                 </goals>
                 <configuration>
-                  <name>jennite-vcf-store</name>
+                  <name>${project.name}</name>
                   <needarch>noarch</needarch>
                   <version>${project.version}</version>
-                  <license>see /usr/share/doc/opal/copyright</license>
+                  <license>see /usr/share/doc/${project.name}/copyright</license>
                   <group>Applications/Engineering</group>
                   <packager>OBiBa</packager>
                   <prefix>/usr/share</prefix>
@@ -211,18 +179,54 @@
 
                   <mappings>
                     <mapping>
-                      <directory>/usr/share/jennite-vcf-store</directory>
+                      <directory>/usr/share/${project.name}</directory>
                       <filemode>640</filemode>
                       <username>opal</username>
                       <groupname>adm</groupname>
                       <configuration>true</configuration>
                       <sources>
                         <source>
-                          <location>${basedir}/target/jennite-vcf-store-${project.version}-dist.zip</location>
+                          <location>${basedir}/target/${project.name}-${project.version}-dist.zip</location>
                         </source>
                       </sources>
                     </mapping>
                   </mappings>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>de.jutzig</groupId>
+            <artifactId>github-release-plugin</artifactId>
+            <version>${github-release-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>make-release</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>release</goal>
+                </goals>
+                <configuration>
+                  <releaseName>${project.version}</releaseName>
+                  <tag>${project.version}</tag>
+                  <repositoryId>obiba/${project.name}</repositoryId>
+                  <artifact>donotuploadjar</artifact>
+                  <fileSets>
+                    <fileSet>
+                      <directory>${basedir}/target</directory>
+                      <includes>
+                        <include>*.zip</include>
+                        <include>*.deb</include>
+                      </includes>
+                    </fileSet>
+                    <fileSet>
+                      <directory>${basedir}/target/rpm/${project.name}/RPMS/noarch</directory>
+                      <includes>
+                        <include>*.rpm</include>
+                      </includes>
+                    </fileSet>
+                  </fileSets>
                 </configuration>
               </execution>
             </executions>
