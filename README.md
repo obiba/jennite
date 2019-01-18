@@ -1,4 +1,4 @@
-# Jennite [![Build Status](https://ci.obiba.org/view/Opal/job/Jennite/badge/icon)](https://ci.obiba.org/view/Opal/job/Jennite/)
+# Jennite [![Build Status](https://travis-ci.org/obiba/jennite.svg?branch=master)](https://travis-ci.org/obiba/jennite)
 
 Genotype VCF store, with basic analytics using [bcftools and htslib](http://www.htslib.org/).
 
@@ -8,19 +8,15 @@ Opal is OBiBa’s core database application for biobanks or epidemiological stud
 
 [Opal Presentation](http://www.obiba.org/pages/products/opal/)
 
-[Opal Documentation](https://wiki.obiba.org/display/OPALDOC)
+[Opal Documentation](http://opaldoc.obiba.org/en/latest/)
 
 ## Download
 
-See download and installation instructions [Opal Plugins Installation Guide](https://wiki.obiba.org/display/OPALDOCDEV/Opal+Plugins+Installation+Guide)
+See download and installation instructions [Opal Plugins Installation Guide](http://opaldoc.obiba.org/en/latest/admin/plugins.html)
 
 ## Bug tracker
 
-Have a bug? Please create an issue on [OBiBa JIRA](http://jira.obiba.org/jira/browse/OPAL).
-
-## Continuous integration
-
-See [OBiBa Jenkins](https://ci.obiba.org/view/Opal/job/Jennite/).
+Have a bug? Please create an issue on [Github](https://github.com/obiba/jennite/issues).
 
 ## Mailing list
 
