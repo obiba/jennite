@@ -262,24 +262,6 @@
         </configuration>
       </plugin>
 
-      <!-- JAVA 8 is not supported yet by PMD -->
-      <!--<plugin>-->
-      <!--<artifactId>maven-pmd-plugin</artifactId>-->
-      <!--<version>${maven-pmd-plugin.version}</version>-->
-      <!--<configuration>-->
-      <!--<linkXref>false</linkXref>-->
-      <!--<sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>-->
-      <!--<minimumTokens>30</minimumTokens>-->
-      <!--<targetJdk>${java.version}</targetJdk>-->
-      <!--<excludeRoots>-->
-      <!--<excludeRoot>target/generated-sources</excludeRoot>-->
-      <!--</excludeRoots>-->
-      <!--<rulesets>-->
-      <!--<ruleset>http://github.com/obiba/conventions/raw/master/obiba-pmd-ruleset.xml</ruleset>-->
-      <!--</rulesets>-->
-      <!--</configuration>-->
-      <!--</plugin>-->
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -330,7 +312,7 @@
     <repository>
       <id>obiba-releases</id>
       <name>Obiba Maven Releases Repository</name>
-      <url>https://dl.bintray.com/obiba/maven</url>
+      <url>https://obiba.jfrog.io/obiba/libs-release</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -351,18 +333,14 @@
     </repository>
   </repositories>
 
-  <prerequisites>
-    <maven>3.0.0</maven>
-  </prerequisites>
-
   <distributionManagement>
     <repository>
-      <id>obiba-bintray</id>
-      <url>https://api.bintray.com/obiba/maven/</url>
+      <id>obiba-release-local</id>
+      <url>https://obiba.jfrog.io/obiba/libs-release-local</url>
     </repository>
     <snapshotRepository>
-      <id>obiba-artifactory</id>
-      <url>https://obiba.jfrog.io/obiba/libs-snapshot</url>
+      <id>obiba-snapshot-local</id>
+      <url>https://obiba.jfrog.io/obiba/libs-snapshot-local</url>
     </snapshotRepository>
   </distributionManagement>
 
