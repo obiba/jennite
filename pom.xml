@@ -30,19 +30,20 @@
   </modules>
 
   <properties>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.release>21</maven.compiler.release>
+    <maven.compiler.target>21</maven.compiler.target>
+    <maven.compiler.source>21</maven.compiler.source>
 
     <assertj-core.version>1.7.1</assertj-core.version>
-    <junit.version>4.12</junit.version>
-    <logback.version>1.1.3</logback.version>
-    <obiba-commons.version>1.12-SNAPSHOT</obiba-commons.version>
-    <opal.version>2.13-SNAPSHOT</opal.version>
-    <slf4j.version>1.5.6</slf4j.version>
+    <junit.version>4.13.1</junit.version>
+    <logback.version>1.5.6</logback.version>
+    <obiba-commons.version>4.2.0</obiba-commons.version>
+    <opal.version>5.0-SNAPSHOT</opal.version>
+    <slf4j.version>2.0.12</slf4j.version>
 
     <!-- maven plugins -->
     <github-release-plugin.version>1.2.0</github-release-plugin.version>
-    <maven-antrun-plugin.version>1.7</maven-antrun-plugin.version>
+    <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
     <maven-assembly-plugin.version>3.0.0</maven-assembly-plugin.version>
     <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
     <maven-dependency-plugin.version>3.1.0</maven-dependency-plugin.version>
@@ -83,7 +84,7 @@
 
       <dependency>
         <groupId>org.slf4j</groupId>
-        <artifactId>jcl104-over-slf4j</artifactId>
+        <artifactId>jcl-over-slf4j</artifactId>
         <version>${slf4j.version}</version>
         <type>jar</type>
       </dependency>
@@ -144,7 +145,7 @@
 
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>jcl104-over-slf4j</artifactId>
+      <artifactId>jcl-over-slf4j</artifactId>
     </dependency>
 
     <dependency>
@@ -261,24 +262,6 @@
         </configuration>
       </plugin>
 
-      <!-- JAVA 8 is not supported yet by PMD -->
-      <!--<plugin>-->
-      <!--<artifactId>maven-pmd-plugin</artifactId>-->
-      <!--<version>${maven-pmd-plugin.version}</version>-->
-      <!--<configuration>-->
-      <!--<linkXref>false</linkXref>-->
-      <!--<sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>-->
-      <!--<minimumTokens>30</minimumTokens>-->
-      <!--<targetJdk>${java.version}</targetJdk>-->
-      <!--<excludeRoots>-->
-      <!--<excludeRoot>target/generated-sources</excludeRoot>-->
-      <!--</excludeRoots>-->
-      <!--<rulesets>-->
-      <!--<ruleset>http://github.com/obiba/conventions/raw/master/obiba-pmd-ruleset.xml</ruleset>-->
-      <!--</rulesets>-->
-      <!--</configuration>-->
-      <!--</plugin>-->
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -329,7 +312,7 @@
     <repository>
       <id>obiba-releases</id>
       <name>Obiba Maven Releases Repository</name>
-      <url>https://dl.bintray.com/obiba/maven</url>
+      <url>https://obiba.jfrog.io/obiba/libs-release</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -350,18 +333,14 @@
     </repository>
   </repositories>
 
-  <prerequisites>
-    <maven>3.0.0</maven>
-  </prerequisites>
-
   <distributionManagement>
     <repository>
-      <id>obiba-bintray</id>
-      <url>https://api.bintray.com/obiba/maven/</url>
+      <id>obiba-release-local</id>
+      <url>https://obiba.jfrog.io/obiba/libs-release-local</url>
     </repository>
     <snapshotRepository>
-      <id>obiba-artifactory</id>
-      <url>https://obiba.jfrog.io/obiba/libs-snapshot</url>
+      <id>obiba-snapshot-local</id>
+      <url>https://obiba.jfrog.io/obiba/libs-snapshot-local</url>
     </snapshotRepository>
   </distributionManagement>
 
