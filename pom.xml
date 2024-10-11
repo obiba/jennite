@@ -11,26 +11,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
-  <name>Jennite</name>
   <groupId>org.obiba.jennite</groupId>
-  <artifactId>jennite</artifactId>
+  <artifactId>jennite-vcf-store</artifactId>
+  <packaging>jar</packaging>
   <version>2.0-SNAPSHOT</version>
-  <url>http://obiba.org</url>
-
-  <licenses>
-    <license>
-      <name>GNU Public License version 3</name>
-      <url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
-    </license>
-  </licenses>
-
-  <modules>
-    <module>jennite-vcf-store</module>
-  </modules>
+  <name>jennite-vcf-store</name>
+  <url>https://www.obiba.org</url>
 
   <properties>
-    <maven.compiler.release>21</maven.compiler.release>
     <maven.compiler.target>21</maven.compiler.target>
     <maven.compiler.source>21</maven.compiler.source>
 
@@ -58,10 +46,7 @@
     <rpm-maven-plugin.version>2.1.4</rpm-maven-plugin.version>
   </properties>
 
-
-  <!-- Specify versions for common dependencies -->
-  <dependencyManagement>
-    <dependencies>
+  <dependencies>
 
       <dependency>
         <groupId>org.obiba.opal</groupId>
@@ -113,11 +98,6 @@
         <artifactId>logback-core</artifactId>
         <version>${logback.version}</version>
       </dependency>
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-access</artifactId>
-        <version>${logback.version}</version>
-      </dependency>
 
       <!-- Use log4j during testing -->
       <dependency>
@@ -128,123 +108,33 @@
       </dependency>
 
     </dependencies>
-  </dependencyManagement>
-
-  <!-- Define common dependencies -->
-  <dependencies>
-
-    <dependency>
-      <groupId>org.obiba.commons</groupId>
-      <artifactId>obiba-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>jcl-over-slf4j</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-  </dependencies>
-
-  <packaging>pom</packaging>
 
   <build>
-
-    <pluginManagement>
-
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-release-plugin</artifactId>
-          <version>${maven-release-plugin.version}</version>
-          <configuration>
-            <!-- Use parent version as modules' version -->
-            <autoVersionSubmodules>true</autoVersionSubmodules>
-            <releaseProfiles>ci-build,release</releaseProfiles>
-            <!-- Comment this profile because Jenkins crashes while performing the release -->
-            <!--<preparationGoals>clean verify install</preparationGoals>-->
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-antrun-plugin</artifactId>
-          <version>${maven-antrun-plugin.version}</version>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-assembly-plugin</artifactId>
-          <version>${maven-assembly-plugin.version}</version>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>${maven-resources-plugin.version}</version>
-        </plugin>
-
-      </plugins>
-
-    </pluginManagement>
-
     <plugins>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>${maven-assembly-plugin.version}</version>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/assembly/plugin.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler-plugin.version}</version>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>${maven-release-plugin.version}</version>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <version>${maven-enforcer-plugin.version}</version>
-        <executions>
-          <execution>
-            <id>enforce-versions</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireMavenVersion>
-                  <message>You are running an older version of Maven. Mica requires at least Maven 3.0</message>
-                  <version>[3.0.0,)</version>
-                </requireMavenVersion>
-                <requireJavaVersion>
-                  <message>You are running an older version of Java. Mica requires at least JDK 1.7</message>
-                  <version>[1.7.0,)</version>
-                </requireJavaVersion>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
@@ -254,12 +144,58 @@
       </plugin>
 
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>${maven-findbugs-plugin.version}</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9</version>
         <configuration>
-          <failOnError>false</failOnError>
+          <source>8</source>
         </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <additionalparam>-Xdoclint:none</additionalparam>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>${maven-resources-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <overwrite>true</overwrite>
+              <outputDirectory>${basedir}/target</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}</directory>
+                  <includes>
+                    <include>LICENSE.txt</include>
+                    <include>README.md</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+                <resource>
+                  <directory>${basedir}/src/main/conf</directory>
+                  <includes>
+                    <include>plugin.properties</include>
+                    <include>site.properties</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
@@ -277,6 +213,16 @@
         </executions>
       </plugin>
 
+      <!-- Disable default deployer. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${maven-deploy-plugin.version}</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -286,27 +232,50 @@
         </configuration>
       </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9</version>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
     </plugins>
-
   </build>
 
+  <profiles>
+    <profile>
+      <!-- A profile for the builds performed by the continuous integration server -->
+      <id>release</id>
+      <build>
+        <plugins>
+
+          <!-- Upload packages to github release -->
+          <plugin>
+            <groupId>de.jutzig</groupId>
+            <artifactId>github-release-plugin</artifactId>
+            <version>${github-release-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>make-release</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>release</goal>
+                </goals>
+                <configuration>
+                  <releaseName>${project.version}</releaseName>
+                  <tag>${project.version}</tag>
+                  <repositoryId>obiba/${project.name}</repositoryId>
+                  <artifact>donotuploadjar</artifact>
+                  <fileSets>
+                    <fileSet>
+                      <directory>${basedir}/target</directory>
+                      <includes>
+                        <include>*.zip</include>
+                      </includes>
+                    </fileSet>
+                  </fileSets>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <repositories>
     <repository>
@@ -333,32 +302,21 @@
     </repository>
   </repositories>
 
-  <distributionManagement>
-    <repository>
-      <id>obiba-release-local</id>
-      <url>https://obiba.jfrog.io/obiba/libs-release-local</url>
-    </repository>
-    <snapshotRepository>
-      <id>obiba-snapshot-local</id>
-      <url>https://obiba.jfrog.io/obiba/libs-snapshot-local</url>
-    </snapshotRepository>
-  </distributionManagement>
-
   <scm>
-    <connection>scm:git:https://github.com/obiba/jennite.git</connection>
-    <developerConnection>scm:git:https://github.com/obiba/jennite.git</developerConnection>
-    <url>https://github.com/obiba/jennite</url>
+    <connection>scm:git:https://github.com/obiba/jennite-vcf-store.git</connection>
+    <developerConnection>scm:git:https://github.com/obiba/jennite-vcf-store.git</developerConnection>
+    <url>https://github.com/obiba/jennite-vcf-store</url>
     <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/obiba/jennite/issues</url>
+    <url>https://github.com/obiba/jennite-vcf-store/issues</url>
   </issueManagement>
 
   <ciManagement>
     <system>Travis</system>
-    <url>https://travis-ci.org/obiba/jennite</url>
+    <url>https://travis-ci.org/obiba/jennite-vcf-store</url>
   </ciManagement>
 
   <mailingLists>
@@ -369,4 +327,10 @@
     </mailingList>
   </mailingLists>
 
+  <licenses>
+    <license>
+      <name>GNU Public License version 3</name>
+      <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+    </license>
+  </licenses>
 </project>

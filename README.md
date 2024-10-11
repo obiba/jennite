@@ -1,8 +1,17 @@
-# Jennite [![Build Status](https://travis-ci.org/obiba/jennite.svg?branch=master)](https://travis-ci.org/obiba/jennite)
+# Jennite VCF Store [![Build Status](https://travis-ci.org/obiba/jennite-vcf-store.svg?branch=master)](https://travis-ci.org/obiba/jennitei-vcf-store)
 
-Genotype VCF store, with basic analytics using [bcftools and htslib](http://www.htslib.org/).
+Opal plugin that provides a Genotype VCF store, with basic analytics using [bcftools and htslib](http://www.htslib.org/).
 
 Opal is OBiBa’s core database application for biobanks or epidemiological studies.
+
+## System Requirements
+
+The following executables are required for Jennite VCF Store plugin to operate:
+* bcftools : VCF/BCF file management (sample list extraction, statistics, filtering)
+* tabix : VCF/BCF file indexing
+* bgzip : VCF/BCF file compression
+
+These tools can be installed as system-specific packages or compiled from source code available at: [bctools and htslib download](http://www.htslib.org/download/).
 
 ## Documentation
 
